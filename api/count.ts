@@ -15,7 +15,8 @@
 
 import { head, put } from "@vercel/blob";
 
-export const config = { runtime: "edge" };
+// Node runtime, not edge: the Blob SDK carries undici, which the edge runtime
+// refuses. A counter has no latency budget worth the fight.
 
 const KEY = "count.json";
 const JSON_HEADERS = {
@@ -50,20 +51,24 @@ async function writeCount(count: number): Promise<void> {
   });
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return reply(null, 503);
+export default {
+  async fetch(request: Request): Promise<Response> {
+    // No store wired up yet: say so, and the page hides the line rather than
+    // showing a number that isn't one.
+    if (!process.env.BLOB_READ_WRITE_TOKEN) return reply(null, 503);
 
-  if (request.method === "GET") return reply(await readCount());
+    if (request.method === "GET") return reply(await readCount());
 
-  if (request.method === "POST") {
-    const count = (await readCount()) + 1;
-    try {
-      await writeCount(count);
-    } catch {
-      return reply(null, 503);
+    if (request.method === "POST") {
+      const count = (await readCount()) + 1;
+      try {
+        await writeCount(count);
+      } catch {
+        return reply(null, 503);
+      }
+      return reply(count);
     }
-    return reply(count);
-  }
 
-  return new Response("Method not allowed", { status: 405, headers: { allow: "GET, POST" } });
-}
+    return new Response("Method not allowed", { status: 405, headers: { allow: "GET, POST" } });
+  },
+};
