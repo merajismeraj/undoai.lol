@@ -21,9 +21,9 @@ npm run build      # → dist/, static files
 
 ## Deploy
 
-It runs at [undoai.lol](https://undoai.lol). `public/CNAME` carries that domain into `dist/`, which is what GitHub Pages reads; other hosts ignore the file.
+It runs at [undoai.lol](https://undoai.lol), on Vercel, from the `undoai` project in the `meraj-codeins-projects` team. Pushing to `main` builds and ships it — framework preset `vite`, build `npm run build`, output `dist`. There is nothing to configure beyond that: no environment variables, no serverless functions, no database. The whole site is three static files.
 
-`.github/workflows/deploy.yml` builds and publishes to Pages, and is **manual-only** as committed — turn Pages on (Settings → Pages → Source: GitHub Actions), then change its trigger to `push` on `main`. Serving from Vercel or Netlify instead? Point the project at this repo, build command `npm run build`, output `dist`, and delete that workflow.
+Hosting it somewhere else is a `npm run build` and a copy of `dist/` — the page has no server side to port.
 
 ## What it removes
 
