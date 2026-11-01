@@ -15,7 +15,7 @@ A generated document gives itself away in its characters long before its argumen
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 22 tests against real .docx/.pptx files
+npm test           # 24 tests against real .docx/.pptx files
 npm run build      # → dist/, static files
 ```
 
@@ -69,6 +69,14 @@ Two decisions are worth knowing about:
 Structural invariants the tests hold to: a table cell and a PowerPoint text body must keep at least one paragraph, so an aside that *is* the whole cell is emptied rather than deleted; the paragraph carrying a section's page setup is emptied for the same reason; and a second pass over a cleaned file must find nothing left to change.
 
 ## Verification
+
+**No network, no model.** Nothing here reads or rewrites a document with an AI: the whole pass is string and byte manipulation, and the only "ChatGPT" and "Claude" in the source are patterns matched *against* your document to find a generator's name in it. The page has no runtime dependencies, the shipped bundle contains no `fetch`, `XMLHttpRequest`, `WebSocket` or worker, and `test/no-network.test.ts` fails the build if one ever appears. Checkable in one line:
+
+```bash
+npm run build && grep -cE "fetch\(|XMLHttpRequest|WebSocket|sendBeacon" dist/assets/*.js   # → 0
+```
+
+Loading the page makes three requests — its own HTML, JS and CSS — and then nothing, ever. Switch your browser to offline after it loads and it still cleans a file; that is tested the same way, with the browser's network cut before the document goes in.
 
 `npm test` builds real `.docx` and `.pptx` files with the `docx` and `pptxgenjs` libraries — complete packages, styles and themes and relationships included — cleans them, and then checks the output three ways: every entry's CRC and length against its own header, every XML part through a strict parser, and the Word document back through [mammoth](https://github.com/mwilliamson/mammoth.js), a third-party reader with its own idea of a valid file.
 

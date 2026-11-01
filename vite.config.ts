@@ -8,5 +8,13 @@ import { defineConfig } from "vite";
  */
 export default defineConfig({
   base: "./",
-  build: { target: "es2022", sourcemap: true },
+  build: {
+    target: "es2022",
+    sourcemap: true,
+    // No module-preload polyfill. It is the one thing in a Vite bundle that
+    // calls `fetch` — only ever for the page's own assets, but a tool whose
+    // whole promise is "your file never leaves the machine" should be provable
+    // by grepping the shipped JS for `fetch(` and finding nothing.
+    modulePreload: false,
+  },
 });
