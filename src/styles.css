@@ -1,31 +1,52 @@
 /*
  * One stylesheet, no framework.
  *
- * The look is a terminal readout rather than a landing page: square corners,
- * hairline rules, monospace for anything structural, and colour reserved for
- * state — a count is green because it is a number that changed, not because
- * green is pretty. Dark only; a light theme would be a second surface to
- * maintain for a page nobody keeps open for long.
+ * Paper, ink, and a proofreader's red. A tool that edits documents should look
+ * like the margin of one — warm off-white, a serif for anything you actually
+ * read, monospace kept for structure, and the red reserved for marks: the
+ * prompt, a count of what came out, the thing you are about to click. No
+ * gradients, no glow, no grid, no neon-on-charcoal.
+ *
+ * Light by default because documents are. The dark variant is the same paper
+ * turned down, not a different design.
  */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --bg: #0a0c10;
-  --surface: #10141b;
-  --surface-2: #161b24;
-  --fg: #d7dee8;
-  --muted: #7d8b9e;
-  --border: #1f2733;
-  --border-bright: #2e3948;
+  --paper: #f6f4ef;
+  --surface: #fdfcf9;
+  --ink: #1c1a17;
+  --muted: #6d6658;
+  --rule: #ddd7c9;
+  --rule-strong: #c4bba6;
 
-  --accent: #5eead4;
-  --accent-soft: #0d2320;
-  --warning: #f2b657;
-  --critical: #fb7185;
+  /* The editor's pen. Used sparingly enough that it still means something. */
+  --mark: #b23a1f;
+  --mark-soft: #f3e6e0;
+  --ochre: #8a6520;
+  --ochre-soft: #f3ebdb;
 
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --prose: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --paper: #14130f;
+    --surface: #1b1915;
+    --ink: #e9e4d8;
+    --muted: #978f7d;
+    --rule: #2c2822;
+    --rule-strong: #403a30;
+
+    --mark: #d8694a;
+    --mark-soft: #2a1a14;
+    --ochre: #c89a4e;
+    --ochre-soft: #272015;
+  }
 }
 
 * {
@@ -37,21 +58,21 @@ html {
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--mono);
   line-height: 1.55;
-  /* A faint engineering grid: present enough to feel like a workspace, quiet
-     enough that text still reads cleanly on top of it. */
-  background-image:
-    linear-gradient(#0e131a 1px, transparent 1px),
-    linear-gradient(90deg, #0e131a 1px, transparent 1px);
-  background-size: 32px 32px;
 }
 
+/* Takes the slack so the footer sits on the bottom edge of a short page
+   instead of floating halfway up it. */
 main {
+  flex: 1;
+  width: 100%;
   max-width: 42rem;
   margin: 0 auto;
   padding: 5rem 1.25rem 4rem;
@@ -60,7 +81,7 @@ main {
 code {
   font-family: var(--mono);
   font-size: 0.85em;
-  color: var(--accent);
+  color: var(--mark);
 }
 
 /* ── chrome ─────────────────────────────────────────────────────────────── */
@@ -71,15 +92,14 @@ code {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  background: rgba(10, 12, 16, 0.85);
-  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
   font-size: 0.8rem;
 }
 
 footer.chrome {
   border-bottom: 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--rule);
   color: var(--muted);
   background: var(--surface);
 }
@@ -89,8 +109,8 @@ footer.chrome {
   letter-spacing: -0.01em;
 }
 
-.accent {
-  color: var(--accent);
+.mark {
+  color: var(--mark);
 }
 
 .chrome-link {
@@ -99,7 +119,7 @@ footer.chrome {
 }
 
 .chrome-link:hover {
-  color: var(--accent);
+  color: var(--mark);
 }
 
 /* ── page head ──────────────────────────────────────────────────────────── */
@@ -114,7 +134,7 @@ h1 {
 .lede {
   margin: 0.6rem 0 0;
   max-width: 44rem;
-  font-family: var(--sans);
+  font-family: var(--prose);
   color: var(--muted);
 }
 
@@ -122,7 +142,7 @@ h1 {
 
 .result {
   margin-top: 1.25rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--rule);
   background: var(--surface);
 }
 
@@ -136,19 +156,19 @@ h1 {
   gap: 0.4rem;
   margin-top: 2rem;
   padding: 3.25rem 1.5rem;
-  border: 1px dashed var(--border-bright);
+  border: 1px dashed var(--rule-strong);
   text-align: center;
   cursor: pointer;
   transition: border-color 0.15s, background-color 0.15s;
 }
 
 .drop:hover {
-  border-color: var(--accent);
+  border-color: var(--mark);
 }
 
 .drop.dragging {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--mark);
+  background: var(--mark-soft);
 }
 
 .drop-line {
@@ -156,7 +176,7 @@ h1 {
 }
 
 .drop-hint {
-  font-family: var(--sans);
+  font-family: var(--prose);
   font-size: 0.8rem;
   color: var(--muted);
 }
@@ -192,7 +212,7 @@ h1 {
 
 .count b {
   font-weight: 500;
-  color: var(--accent);
+  color: var(--mark);
 }
 
 .options {
@@ -218,7 +238,7 @@ h1 {
 }
 
 .options summary:hover {
-  color: var(--accent);
+  color: var(--mark);
 }
 
 .options-body {
@@ -226,7 +246,7 @@ h1 {
   gap: 0.5rem;
   margin-top: 0.75rem;
   padding: 0.85rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--rule);
   background: var(--surface);
 }
 
@@ -238,7 +258,7 @@ h1 {
 }
 
 .option input[type="checkbox"] {
-  accent-color: var(--accent);
+  accent-color: var(--mark);
 }
 
 .option-field {
@@ -251,16 +271,16 @@ h1 {
 .option-field input {
   width: 100%;
   padding: 0.4rem 0.5rem;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg);
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--mono);
   font-size: 0.8rem;
 }
 
 .option-field input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--mark);
 }
 
 /* ── results ────────────────────────────────────────────────────────────── */
@@ -271,7 +291,7 @@ h1 {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
 }
 
 .result-name {
@@ -282,7 +302,7 @@ h1 {
 
 .result-meta {
   margin: 0.25rem 0 0;
-  font-family: var(--sans);
+  font-family: var(--prose);
   font-size: 0.8rem;
   color: var(--muted);
 }
@@ -319,7 +339,7 @@ h1 {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
-  font-family: var(--sans);
+  font-family: var(--prose);
   font-size: 0.85rem;
   color: var(--muted);
 }
@@ -328,13 +348,13 @@ h1 {
   font-family: var(--mono);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: var(--accent);
+  color: var(--mark);
 }
 
 .notes {
   margin: 0.5rem 0 0;
   padding-left: 1.1rem;
-  font-family: var(--sans);
+  font-family: var(--prose);
   font-size: 0.85rem;
   color: var(--muted);
 }
@@ -348,9 +368,9 @@ h1 {
 
 .chip {
   padding: 0.15rem 0.4rem;
-  border: 1px solid rgba(242, 182, 87, 0.4);
-  background: rgba(242, 182, 87, 0.08);
-  color: var(--warning);
+  border: 1px solid var(--ochre);
+  background: var(--ochre-soft);
+  color: var(--ochre);
   font-size: 0.7rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -360,9 +380,9 @@ h1 {
 .button {
   flex-shrink: 0;
   padding: 0.4rem 0.8rem;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: #06120f;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--surface);
   font-family: var(--mono);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
@@ -371,8 +391,9 @@ h1 {
 }
 
 .button:hover {
-  background: transparent;
-  color: var(--accent);
+  border-color: var(--mark);
+  background: var(--mark);
+  color: var(--surface);
 }
 
 .status {
@@ -382,7 +403,7 @@ h1 {
 }
 
 .status.failed {
-  color: var(--critical);
+  color: #9b2c20;
 }
 
 /* ── the small print, kept small ───────────────────────────────────────── */
@@ -390,7 +411,7 @@ h1 {
 .strips,
 .caveat {
   margin: 2.75rem 0 0;
-  font-family: var(--sans);
+  font-family: var(--prose);
   font-size: 0.78rem;
   line-height: 1.65;
   color: var(--muted);
@@ -405,5 +426,5 @@ h1 {
 }
 
 .caveat a:hover {
-  color: var(--accent);
+  color: var(--mark);
 }
