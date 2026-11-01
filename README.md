@@ -17,7 +17,7 @@ The one thing the page sends is a tick to its own counter after a file is cleane
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 26 tests against real .docx/.pptx files
+npm test           # 29 tests against real .docx/.pptx files
 npm run build      # → dist/, static files
 ```
 
@@ -39,6 +39,7 @@ Hosting the page anywhere else is `npm run build` and a copy of `dist/`. Drop th
 | **Chat leftovers** | Literal `**bold**` and `### headings` that arrived as characters, `【4:0†source】` citation markers, whole assistant asides ("Certainly! Here's your report.", "I hope this helps!") |
 | **Metadata** | Author, last-edited-by, timestamps, revision count, keywords, description, generator tags, custom properties, embedded thumbnail |
 | **Fingerprints** | Word's per-paragraph `rsid` and `paraId` stamps, PowerPoint's per-shape creation GUIDs — together they describe how a file was assembled, and one long generated burst looks nothing like a document typed over a week |
+| **Look and feel** | Colours off the web ramp a generator reaches for — indigo `#6366F1`, slate `#0F172A`, the whole Tailwind set — repainted to their Office equivalents, and a theme named after the tool that made it renamed. Fonts are left alone: a document whose typeface silently changed is a document whose layout broke |
 | **Review layer** | Comments, tracked changes flattened to their final text, hidden (`w:vanish`) runs — a tidy place to park a watermark, since nobody sees them |
 | **Links** | Links to AI tools, removed while keeping the words they sat on; `utm_source=chatgpt.com` stripped off the rest |
 
@@ -60,6 +61,7 @@ Four modules, no runtime dependencies:
 src/ooxml/zip.ts     a minimal ZIP reader/writer over CompressionStream
 src/ooxml/xml.ts     string-level XML surgery — a nesting-aware element walker
 src/ooxml/text.ts    the character rules, and the phrases only counted
+src/ooxml/theme.ts   the palette repaint and tool-named themes
 src/ooxml/clean.ts   the pass itself: links, content, properties, rebuild
 src/main.ts          the page
 ```
@@ -69,6 +71,8 @@ Two decisions are worth knowing about:
 **Its own ZIP code.** A `.docx` is a ZIP of XML parts. Pulling a general-purpose zip library into every page load to read a few headers is a worse trade than 150 lines we control; compression itself is the platform's (`CompressionStream`). Untouched parts keep their original compressed bytes rather than being re-deflated, so media survives bit for bit.
 
 **No DOM parse.** `DOMParser` would round-trip through a serialiser that reorders namespace declarations and rewrites self-closing tags, and Word is fussy enough that a "clean" file can come back unopenable. Only the bytes we mean to change are touched. That costs an element walker that matches tags itself — a `w:p` inside a text box lives inside another `w:p`, so a non-greedy regex would close the outer paragraph at the inner one's end tag and shred the file.
+
+On the repaint, the expensive mistake would be a false positive: millions of real documents use the stock Office palette, and repainting one would be vandalism. So the match list is exactly the web ramp — the colours a model writes by reflex and a person picking inside PowerPoint never lands on — and a test asserts that an ordinary Office theme comes back byte-identical.
 
 Structural invariants the tests hold to: a table cell and a PowerPoint text body must keep at least one paragraph, so an aside that *is* the whole cell is emptied rather than deleted; the paragraph carrying a section's page setup is emptied for the same reason; and a second pass over a cleaned file must find nothing left to change.
 

@@ -156,3 +156,10 @@ export async function readParts(blob: Blob): Promise<Map<string, string>> {
 export async function partNames(blob: Blob): Promise<string[]> {
   return readZip(await blob.arrayBuffer()).map((e) => e.name);
 }
+
+/**
+ * A theme part as a slide generator leaves it: named after the tool, and
+ * coloured straight off the web ramp that language models write by reflex.
+ */
+export const GENERATED_THEME = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Gamma Deck"><a:themeElements><a:clrScheme name="Gamma"><a:dk1><a:srgbClr val="0F172A"/></a:dk1><a:lt1><a:srgbClr val="F1F5F9"/></a:lt1><a:dk2><a:srgbClr val="1E293B"/></a:dk2><a:lt2><a:srgbClr val="E2E8F0"/></a:lt2><a:accent1><a:srgbClr val="6366F1"/></a:accent1><a:accent2><a:srgbClr val="8B5CF6"/></a:accent2><a:accent3><a:srgbClr val="14B8A6"/></a:accent3><a:accent4><a:srgbClr val="F59E0B"/></a:accent4><a:accent5><a:srgbClr val="EC4899"/></a:accent5><a:accent6><a:srgbClr val="22C55E"/></a:accent6><a:hlink><a:srgbClr val="0EA5E9"/></a:hlink><a:folHlink><a:srgbClr val="A855F7"/></a:folHlink></a:clrScheme><a:fontScheme name="Gamma"><a:majorFont><a:latin typeface="Inter"/></a:majorFont><a:minorFont><a:latin typeface="Inter"/></a:minorFont></a:fontScheme><a:fmtScheme name="Gamma"><a:fillStyleLst><a:solidFill><a:srgbClr val="6366F1"/></a:solidFill></a:fillStyleLst></a:fmtScheme></a:themeElements></a:theme>`;

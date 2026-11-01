@@ -7,7 +7,15 @@ import { DEFAULT_OPTIONS, cleanDocument } from "../src/ooxml/clean";
 import { cleanText, isFillerParagraph, Tally } from "../src/ooxml/text";
 import { mapText, replaceElements, resolvePart, textOf } from "../src/ooxml/xml";
 import { crc32, makeEntry, readEntry, readZip, writeZip } from "../src/ooxml/zip";
-import { REVIEWED_BODY, makeDocx, makePptx, partNames, readParts, withPart } from "./fixtures";
+import {
+  GENERATED_THEME,
+  REVIEWED_BODY,
+  makeDocx,
+  makePptx,
+  partNames,
+  readParts,
+  withPart,
+} from "./fixtures";
 
 /** Characters that must not survive a clean, whatever the file. */
 const TRACES = new RegExp(
@@ -308,4 +316,54 @@ test("relationship targets resolve against the part that declared them", () => {
     resolvePart("ppt/slides/_rels/slide1.xml.rels", "../media/img.png"),
     "ppt/media/img.png",
   );
+});
+
+/* ── the look of the thing ───────────────────────────────────────────────── */
+
+test("a generated palette is repainted and the tool's theme name goes", async () => {
+  const file = await withPart(await makePptx(), "ppt/theme/theme1.xml", GENERATED_THEME);
+  const result = await cleanDocument(file);
+  const theme = (await readParts(result.blob)).get("ppt/theme/theme1.xml")!;
+
+  // The web ramp, gone.
+  for (const hex of ["6366F1", "8B5CF6", "14B8A6", "0F172A", "F1F5F9", "EC4899"]) {
+    assert.doesNotMatch(theme, new RegExp(hex, "i"), `${hex} survived the repaint`);
+  }
+  // Replaced by Office's own, not by nothing: a blue stays a blue.
+  assert.match(theme, /4472C4/, "the indigo accent lost its colour instead of changing it");
+  assert.match(theme, /7030A0/);
+
+  assert.doesNotMatch(theme, /Gamma/, "the theme still names the tool that made it");
+  assert.match(theme, /name="Office Theme"/);
+
+  // The typeface is left alone — changing it would break the layout.
+  assert.match(theme, /typeface="Inter"/);
+
+  const look = result.findings.filter((f) => f.group === "look");
+  assert.ok(look.length === 2, "the report should show both the repaint and the rename");
+});
+
+test("an ordinary Office theme is left exactly as it was", async () => {
+  // The expensive mistake here is a false positive: millions of real documents
+  // use the stock Office palette, and repainting one would be vandalism.
+  const original = await makePptx();
+  const before = (await readParts(original)).get("ppt/theme/theme1.xml")!;
+  const result = await cleanDocument(original);
+  const after = (await readParts(result.blob)).get("ppt/theme/theme1.xml")!;
+
+  assert.equal(after, before, "a normal theme was modified");
+  assert.deepEqual(
+    result.findings.filter((f) => f.group === "look"),
+    [],
+    "a normal theme was reported as generated",
+  );
+});
+
+test("the repaint can be turned off", async () => {
+  const file = await withPart(await makePptx(), "ppt/theme/theme1.xml", GENERATED_THEME);
+  const result = await cleanDocument(file, { ...DEFAULT_OPTIONS, look: false });
+  const theme = (await readParts(result.blob)).get("ppt/theme/theme1.xml")!;
+
+  assert.match(theme, /6366F1/);
+  assert.match(theme, /Gamma/);
 });

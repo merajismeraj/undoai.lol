@@ -22,6 +22,7 @@ export type Group =
   | "invisible"
   | "symbols"
   | "leftovers"
+  | "look"
   | "metadata"
   | "revisions"
   | "review";
@@ -47,6 +48,7 @@ export class Tally {
       "invisible",
       "symbols",
       "leftovers",
+      "look",
       "revisions",
       "metadata",
       "review",
@@ -100,6 +102,8 @@ const LABELS: Record<string, { group: Group; label: string }> = {
   metaOther: { group: "metadata", label: "Other document properties cleared" },
   docIds: { group: "metadata", label: "Editing-session IDs (rsid / paraId / creationId) removed" },
   utm: { group: "metadata", label: "chatgpt.com tracking parameters stripped from links" },
+  palette: { group: "look", label: "Web-palette colours repainted to Office ones" },
+  themeName: { group: "look", label: "Theme named after the tool that made it" },
   comments: { group: "revisions", label: "Comments removed" },
   tracked: { group: "revisions", label: "Tracked changes flattened" },
   hidden: { group: "revisions", label: "Hidden text runs removed" },

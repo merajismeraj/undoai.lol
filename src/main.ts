@@ -19,6 +19,7 @@ const GROUP_TITLES: Record<Group, string> = {
   invisible: "Invisible characters",
   symbols: "Symbols and emoji",
   leftovers: "Chat and markdown leftovers",
+  look: "Look and feel",
   revisions: "Comments and revisions",
   metadata: "Metadata and fingerprints",
   review: "Left for you to decide",
@@ -41,6 +42,7 @@ const toggles = {
   metadata: must<HTMLInputElement>("opt-metadata"),
   revisions: must<HTMLInputElement>("opt-revisions"),
   leftovers: must<HTMLInputElement>("opt-leftovers"),
+  look: must<HTMLInputElement>("opt-look"),
 };
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -66,6 +68,7 @@ function currentOptions(): CleanOptions {
     metadata: toggles.metadata.checked,
     revisions: toggles.revisions.checked,
     leftovers: toggles.leftovers.checked,
+    look: toggles.look.checked,
     author: authorInput.value,
   };
 }

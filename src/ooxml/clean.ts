@@ -36,6 +36,7 @@ import {
   unwrapElement,
   type Element,
 } from "./xml";
+import { repaintTheme } from "./theme";
 import { ZipError, makeEntry, readEntry, readZip, writeZip, type ZipEntry } from "./zip";
 
 export type CleanOptions = {
@@ -45,6 +46,8 @@ export type CleanOptions = {
   revisions: boolean;
   /** Chat preambles, stray markdown, citation markers. */
   leftovers: boolean;
+  /** Generated colour palettes and tool-named themes. */
+  look: boolean;
   /** Optional name to stamp as the author instead of leaving the field empty. */
   author: string;
 };
@@ -53,6 +56,7 @@ export const DEFAULT_OPTIONS: CleanOptions = {
   metadata: true,
   revisions: true,
   leftovers: true,
+  look: true,
   author: "",
 };
 
@@ -174,6 +178,7 @@ export async function cleanDocument(
     if (options.revisions) xml = stripRevisions(xml, tally, isWord);
     if (options.metadata) xml = stripEditingIds(xml, tally);
     if (options.leftovers) xml = stripFiller(xml, tally, isWord);
+    if (options.look) xml = repaintTheme(xml, tally, notes);
 
     scanCliches(textOf(xml), clicheCounts);
 
