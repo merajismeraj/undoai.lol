@@ -6,7 +6,7 @@
     <title>undoai.lol — strip AI traces from a .docx or .pptx</title>
     <meta
       name="description"
-      content="Remove the traces a generator leaves in a Word document or PowerPoint deck: curly quotes, em dashes, invisible watermark characters, author and generator tags, chat leftovers. Runs entirely in your browser — the file never leaves your machine."
+      content="Remove the marks a generator leaves in a Word document or PowerPoint deck: invisible watermark characters, typography, metadata, chat leftovers. Runs in your browser; the file never leaves it."
     />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🧽</text></svg>" />
     <link rel="stylesheet" href="./src/styles.css" />
@@ -22,122 +22,59 @@
     <main>
       <h1>Undo the AI in a document</h1>
       <p class="lede">
-        A generated document gives itself away in its characters long before its arguments — curly
-        quotes, em dashes, non-breaking spaces, zero-width marks nobody can see, and a set of
-        document properties naming the tool that wrote it. Drop a <code>.docx</code> or
-        <code>.pptx</code> here and get back the same document with all of that removed, plus a list
-        of what came out.
+        Strip the marks a generator leaves in a <code>.docx</code> or <code>.pptx</code>. Runs in
+        your browser — the file never leaves it.
       </p>
 
-      <section class="panel">
-        <h2 class="panel-title">upload</h2>
-        <p class="panel-note">
-          Word (.docx) and PowerPoint (.pptx). Several at a time is fine. Nothing is uploaded — the
-          file is opened, rewritten and handed back inside this tab.
+      <label class="drop" id="drop">
+        <input type="file" id="file" multiple accept=".docx,.pptx,.dotx,.potx" class="visually-hidden" />
+        <span class="drop-line"><span class="accent">$</span> <span id="drop-label">drop a file, or click to pick one</span></span>
+        <span class="drop-hint">.docx · .pptx · up to 40 MB</span>
+      </label>
+
+      <div class="meta-row">
+        <p class="count" id="count" hidden title="The only thing this page ever sends: an empty tick, after a file is cleaned.">
+          <b id="count-value"></b> documents cleaned
         </p>
 
-        <div class="panel-body">
-          <label class="drop" id="drop">
-            <input
-              type="file"
-              id="file"
-              multiple
-              accept=".docx,.pptx,.dotx,.potx"
-              class="visually-hidden"
-            />
-            <span class="drop-line"><span class="accent">$</span> <span id="drop-label">drop a file, or click to pick one</span></span>
-            <span class="drop-hint">.docx or .pptx, up to 40 MB</span>
-          </label>
-
-          <div class="options">
+        <details class="options">
+          <summary>options</summary>
+          <div class="options-body">
             <label class="option">
               <input type="checkbox" id="opt-metadata" checked />
-              <span>
-                <span class="option-name">Metadata and fingerprints</span>
-                <span class="option-hint">
-                  Author, timestamps, generator tags, custom properties, editing-session IDs,
-                  chatgpt.com links.
-                </span>
-              </span>
+              <span>Metadata and fingerprints</span>
             </label>
-
             <label class="option">
               <input type="checkbox" id="opt-revisions" checked />
-              <span>
-                <span class="option-name">Comments and revisions</span>
-                <span class="option-hint">
-                  Comments, tracked changes flattened to their final text, hidden runs.
-                </span>
-              </span>
+              <span>Comments and revisions</span>
             </label>
-
             <label class="option">
               <input type="checkbox" id="opt-leftovers" checked />
-              <span>
-                <span class="option-name">Chat and markdown leftovers</span>
-                <span class="option-hint">
-                  Assistant asides, literal **asterisks**, citation markers.
-                </span>
-              </span>
+              <span>Chat and markdown leftovers</span>
+            </label>
+            <label class="option option-field">
+              <span>Author to stamp</span>
+              <input type="text" id="author" placeholder="optional, else left empty" autocomplete="off" />
             </label>
           </div>
-
-          <label class="field">
-            <span class="field-label">Author to stamp</span>
-            <input type="text" id="author" placeholder="optional" autocomplete="off" />
-            <span class="field-hint">
-              Left blank, the author fields are emptied rather than filled in with anything.
-            </span>
-          </label>
-        </div>
-      </section>
+        </details>
+      </div>
 
       <div id="results"></div>
 
-      <section class="explainer">
-        <div>
-          <h2 class="panel-title">what it rewrites</h2>
-          <ul>
-            <li>Curly quotes and apostrophes, em and en dashes, ellipsis characters, primes.</li>
-            <li>
-              Non-breaking and hair spaces, zero-width joiners, bidi controls, and the Unicode tag
-              characters some generators leave behind as an invisible watermark.
-            </li>
-            <li>Bullet glyphs, arrows, typographic maths symbols, emoji.</li>
-            <li>Literal markdown (<code>**bold**</code>, <code>### heading</code>) and chat citation markers.</li>
-            <li>Assistant asides — &ldquo;Certainly! Here&rsquo;s your report.&rdquo;, &ldquo;I hope this helps!&rdquo;</li>
-            <li>
-              Author, last-edited-by, timestamps, revision count, generator tags, custom properties,
-              thumbnails, editing-session IDs, comments, tracked changes, hidden text.
-            </li>
-            <li>Links to AI tools, and the <code>utm_source=chatgpt.com</code> tail on the rest.</li>
-          </ul>
-        </div>
-
-        <div>
-          <h2 class="panel-title">what it won&rsquo;t do</h2>
-          <ul>
-            <li>
-              It doesn&rsquo;t rewrite your sentences. Stock phrasing is counted and listed; changing
-              it is a judgement call, and a find-and-replace would make the writing worse.
-            </li>
-            <li>
-              It doesn&rsquo;t make text undetectable, and nothing can. Detectors read style and
-              structure, not punctuation — this removes the mechanical traces, not the fact that a
-              model helped.
-            </li>
-            <li>
-              It doesn&rsquo;t touch your layout, images, fonts or styles. Media is copied through
-              byte for byte.
-            </li>
-            <li>Old binary .doc and .ppt files aren&rsquo;t supported — re-save them first.</li>
-          </ul>
-        </div>
-      </section>
+      <p class="strips">
+        Smart quotes · em dashes · zero-width and watermark characters · emoji · bullet and arrow
+        glyphs · stray markdown · assistant asides · author, timestamps and generator tags ·
+        comments · tracked changes · hidden text · chatgpt.com links
+      </p>
+      <p class="caveat">
+        Never rewrites your sentences, and nothing can make text undetectable.
+        <a href="https://github.com/merajismeraj/undoai.lol#how-it-works">How it works</a>
+      </p>
     </main>
 
     <footer class="chrome">
-      <span>no upload, no account, no server</span>
+      <span>no upload · no account · the file stays in your browser</span>
       <a class="chrome-link" href="https://github.com/merajismeraj/undoai.lol">github</a>
     </footer>
   </body>

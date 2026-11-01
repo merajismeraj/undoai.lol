@@ -6,7 +6,9 @@ A generated document gives itself away in its characters long before its argumen
 
 `undoai.lol` takes a `.docx` or `.pptx`, removes all of it, and hands back the same document plus a report of what came out.
 
-**It runs entirely in your browser.** No upload, no account, no server — a tool that promises to remove fingerprints and then posts your file to a stranger's machine has missed the point. Open the page once and it works offline.
+**The document never leaves your browser.** No upload, no account — a tool that promises to remove fingerprints and then posts your file to a stranger's machine has missed the point.
+
+The one thing the page sends is a tick to its own counter after a file is cleaned: a POST with no body, so the number on the homepage costs a document nothing. Block it and everything still works.
 
 ---
 
@@ -15,7 +17,7 @@ A generated document gives itself away in its characters long before its argumen
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 24 tests against real .docx/.pptx files
+npm test           # 26 tests against real .docx/.pptx files
 npm run build      # → dist/, static files
 ```
 
@@ -23,7 +25,9 @@ npm run build      # → dist/, static files
 
 It runs at [undoai.lol](https://undoai.lol), on Vercel, from the `undoai` project in the `meraj-codeins-projects` team. Pushing to `main` builds and ships it — framework preset `vite`, build `npm run build`, output `dist`. There is nothing to configure beyond that: no environment variables, no serverless functions, no database. The whole site is three static files.
 
-Hosting it somewhere else is a `npm run build` and a copy of `dist/` — the page has no server side to port.
+The only server-side code is `api/count.ts`, an edge function holding the homepage counter in a single Vercel Blob (`{"count":N}`, read-modify-write — two documents finished in the same instant can cost one tick, which is the right trade for a number that exists to say "this gets used"). It needs a Blob store connected to the project; without one it answers `{"count":null}` and the page simply doesn't show a number.
+
+Hosting the page anywhere else is `npm run build` and a copy of `dist/`. Drop the function and you lose the counter, nothing else.
 
 ## What it removes
 
@@ -70,13 +74,19 @@ Structural invariants the tests hold to: a table cell and a PowerPoint text body
 
 ## Verification
 
-**No network, no model.** Nothing here reads or rewrites a document with an AI: the whole pass is string and byte manipulation, and the only "ChatGPT" and "Claude" in the source are patterns matched *against* your document to find a generator's name in it. The page has no runtime dependencies, the shipped bundle contains no `fetch`, `XMLHttpRequest`, `WebSocket` or worker, and `test/no-network.test.ts` fails the build if one ever appears. Checkable in one line:
+**No network, no model.** Nothing here reads or rewrites a document with an AI: the whole pass is string and byte manipulation, and the only "ChatGPT" and "Claude" in the source are patterns matched *against* your document to find a generator's name in it.
+
+`test/no-network.test.ts` holds the line, by reading the source rather than the behaviour — an exfiltrating call that only fired on a rare document would pass every functional test in the suite and fail this one:
+
+- `src/ooxml/**`, the entire document pipeline, may not reference a network API or import anything that isn't ours.
+- `src/counter.ts` is the only module in the project allowed a `fetch`. It may hold exactly one address — `/api/count` — may not send a body, and may not import from the pipeline.
+- Nothing under `src/` may import a third-party package, so the browser bundle is first-party code only.
+
+Checkable by hand in one line:
 
 ```bash
-npm run build && grep -cE "fetch\(|XMLHttpRequest|WebSocket|sendBeacon" dist/assets/*.js   # → 0
+npm run build && grep -oE "fetch\([^)]*\)" dist/assets/*.js   # → the counter, and nothing else
 ```
-
-Loading the page makes three requests — its own HTML, JS and CSS — and then nothing, ever. Switch your browser to offline after it loads and it still cleans a file; that is tested the same way, with the browser's network cut before the document goes in.
 
 `npm test` builds real `.docx` and `.pptx` files with the `docx` and `pptxgenjs` libraries — complete packages, styles and themes and relationships included — cleans them, and then checks the output three ways: every entry's CRC and length against its own header, every XML part through a strict parser, and the Word document back through [mammoth](https://github.com/mwilliamson/mammoth.js), a third-party reader with its own idea of a valid file.
 

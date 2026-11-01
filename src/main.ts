@@ -1,5 +1,5 @@
 /**
- * The page: a file input, three checkboxes, and a readout.
+ * The page: a file input, a few options behind a toggle, and a readout.
  *
  * Plain DOM rather than a framework — there is one interaction here (a file
  * goes in, a report and a download come out), and a framework would be more
@@ -12,6 +12,7 @@
 import { DEFAULT_OPTIONS, MAX_BYTES, cleanDocument, type CleanOptions, type CleanResult } from "./ooxml/clean";
 import { supportsZip } from "./ooxml/zip";
 import type { Group } from "./ooxml/text";
+import { readCount, recordCleaned } from "./counter";
 
 const GROUP_TITLES: Record<Group, string> = {
   typography: "Typography",
@@ -34,6 +35,8 @@ const dropLabel = must<HTMLSpanElement>("drop-label");
 const fileInput = must<HTMLInputElement>("file");
 const results = must<HTMLDivElement>("results");
 const authorInput = must<HTMLInputElement>("author");
+const countLine = must<HTMLParagraphElement>("count");
+const countValue = must<HTMLElement>("count-value");
 const toggles = {
   metadata: must<HTMLInputElement>("opt-metadata"),
   revisions: must<HTMLInputElement>("opt-revisions"),
@@ -67,6 +70,18 @@ function currentOptions(): CleanOptions {
   };
 }
 
+/* ── the shared count ────────────────────────────────────────────────────── */
+
+/** Shows the total, or leaves the line hidden when the counter isn't
+    answering — a missing number is quieter than a broken one. */
+function showCount(count: number | null) {
+  if (count === null) return;
+  countValue.textContent = count.toLocaleString();
+  countLine.hidden = false;
+}
+
+void readCount().then(showCount);
+
 /* ── running files ───────────────────────────────────────────────────────── */
 
 let busy = false;
@@ -98,6 +113,9 @@ async function run(files: File[]) {
     try {
       const result = await cleanDocument(file, options);
       card.replaceWith(report(result));
+      // After the work, never before: the tick is a side effect of a document
+      // that was actually cleaned, and it must not delay the result.
+      void recordCleaned().then(showCount);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not read that file.";
       card.replaceWith(status(file.name, message, true));
@@ -149,11 +167,7 @@ function report(result: CleanResult): HTMLElement {
 
   if (changes === 0) {
     body.append(
-      el(
-        "p",
-        "result-meta",
-        "Nothing mechanical to strip — this file already reads like something a person typed.",
-      ),
+      el("p", "result-meta", "Nothing mechanical to strip — this one already reads as typed."),
     );
   } else {
     const groups = el("div", "groups");
@@ -185,15 +199,7 @@ function report(result: CleanResult): HTMLElement {
 
   if (result.cliches.length > 0) {
     const block = el("div");
-    block.append(el("h3", "group-title", "Wording nobody can fix but you"));
-    block.append(
-      el(
-        "p",
-        "result-meta",
-        "Left exactly as written. These are the words that still read as machine-made after every character is fixed.",
-      ),
-    );
-
+    block.append(el("h3", "group-title", "Wording only you can fix"));
     const chips = el("div", "chips");
     for (const cliche of result.cliches) {
       chips.append(el("span", "chip", `${cliche.label} · ${cliche.count}`));
@@ -243,4 +249,4 @@ dropZone.addEventListener("drop", (event) => {
 
 // The size limit lives in one place — the module — and the page repeats it.
 const hint = document.querySelector(".drop-hint");
-if (hint) hint.textContent = `.docx or .pptx, up to ${formatBytes(MAX_BYTES)}`;
+if (hint) hint.textContent = `.docx · .pptx · up to ${formatBytes(MAX_BYTES)}`;

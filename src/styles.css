@@ -52,9 +52,9 @@ body {
 }
 
 main {
-  max-width: 60rem;
+  max-width: 42rem;
   margin: 0 auto;
-  padding: 3rem 1.25rem 4rem;
+  padding: 5rem 1.25rem 4rem;
 }
 
 code {
@@ -106,7 +106,7 @@ footer.chrome {
 
 h1 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
@@ -118,42 +118,12 @@ h1 {
   color: var(--muted);
 }
 
-/* ── panels ─────────────────────────────────────────────────────────────── */
+/* ── result cards ──────────────────────────────────────────────────────── */
 
-.panel,
 .result {
-  margin-top: 2rem;
+  margin-top: 1.25rem;
   border: 1px solid var(--border);
   background: var(--surface);
-}
-
-.panel-title {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.panel > .panel-title {
-  border-bottom: 1px solid var(--border);
-}
-
-.panel-note {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--sans);
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.panel-body {
-  display: grid;
-  gap: 1rem;
-  padding: 1rem;
 }
 
 /* ── drop zone ──────────────────────────────────────────────────────────── */
@@ -164,7 +134,8 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 2.5rem 1.5rem;
+  margin-top: 2rem;
+  padding: 3.25rem 1.5rem;
   border: 1px dashed var(--border-bright);
   text-align: center;
   cursor: pointer;
@@ -202,84 +173,94 @@ h1 {
   border: 0;
 }
 
-/* ── options ────────────────────────────────────────────────────────────── */
+/* ── count and options ──────────────────────────────────────────────────── */
+
+.meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.85rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.count {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.count b {
+  font-weight: 500;
+  color: var(--accent);
+}
 
 .options {
+  margin-left: auto;
+}
+
+.options summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--muted);
+}
+
+.options summary::-webkit-details-marker {
+  display: none;
+}
+
+.options summary::after {
+  content: " \25BE";
+}
+
+.options[open] summary::after {
+  content: " \25B4";
+}
+
+.options summary:hover {
+  color: var(--accent);
+}
+
+.options-body {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .option {
   display: flex;
-  gap: 0.6rem;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
+  align-items: center;
+  gap: 0.5rem;
   cursor: pointer;
 }
 
-.option:hover {
-  border-color: var(--border-bright);
-}
-
-.option input {
-  margin-top: 0.25rem;
+.option input[type="checkbox"] {
   accent-color: var(--accent);
-  flex-shrink: 0;
 }
 
-.option-name {
-  display: block;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.option-hint {
-  display: block;
+.option-field {
+  display: grid;
+  gap: 0.35rem;
   margin-top: 0.35rem;
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  color: var(--muted);
+  cursor: auto;
 }
 
-/* ── author field ───────────────────────────────────────────────────────── */
-
-.field {
-  display: block;
-  max-width: 22rem;
-}
-
-.field-label {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.field input {
+.option-field input {
   width: 100%;
-  padding: 0.5rem 0.6rem;
+  padding: 0.4rem 0.5rem;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--fg);
   font-family: var(--mono);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
-.field input:focus {
+.option-field input:focus {
   outline: none;
   border-color: var(--accent);
-}
-
-.field-hint {
-  display: block;
-  margin-top: 0.35rem;
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  color: var(--muted);
 }
 
 /* ── results ────────────────────────────────────────────────────────────── */
@@ -404,29 +385,25 @@ h1 {
   color: var(--critical);
 }
 
-/* ── explainer ──────────────────────────────────────────────────────────── */
+/* ── the small print, kept small ───────────────────────────────────────── */
 
-.explainer {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
-}
-
-.explainer ul {
-  margin: 0;
-  padding-left: 1.1rem;
+.strips,
+.caveat {
+  margin: 2.75rem 0 0;
   font-family: var(--sans);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
+  line-height: 1.65;
   color: var(--muted);
 }
 
-.explainer li + li {
-  margin-top: 0.4rem;
+.caveat {
+  margin-top: 0.6rem;
 }
 
-.explainer .panel-title {
-  padding: 0 0 0.25rem;
+.caveat a {
+  color: var(--muted);
+}
+
+.caveat a:hover {
+  color: var(--accent);
 }

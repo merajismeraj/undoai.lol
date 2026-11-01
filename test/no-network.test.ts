@@ -5,16 +5,22 @@ import test from "node:test";
 
 /**
  * The promise on the page is that a document never leaves the machine. That is
- * only worth as much as it is checkable, so it is checked here: no module that
- * ships to the browser may reference a network API, and the project may not
- * grow a runtime dependency that could smuggle one in.
+ * only worth as much as it is checkable, so it is checked here rather than
+ * asserted in prose.
  *
- * Both tests read the source rather than the behaviour on purpose — an
- * exfiltrating call that only fires on a rare document would pass every
- * functional test in the suite and fail this one.
+ * One module may talk to the network — the counter, which sends an empty POST
+ * and gets a number back. Everything else, the whole document pipeline
+ * included, must have no way to reach anything at all. These tests read the
+ * source rather than the behaviour on purpose: an exfiltrating call that only
+ * fires on a rare document would pass every functional test in the suite and
+ * fail this one.
  */
 
 const SRC = new URL("../src/", import.meta.url).pathname;
+
+/** The only file allowed a `fetch`, and the only thing it is allowed to hit. */
+const COUNTER = "counter.ts";
+const COUNTER_ENDPOINT = '"/api/count"';
 
 const NETWORK_APIS =
   /\b(fetch|XMLHttpRequest|WebSocket|EventSource|RTCPeerConnection|importScripts)\s*\(|navigator\.(sendBeacon|serviceWorker|connection)|new\s+(Worker|SharedWorker|BroadcastChannel)\b/;
@@ -29,33 +35,66 @@ async function sourceFiles(dir: string): Promise<string[]> {
   return found;
 }
 
-test("nothing that ships to the browser can reach the network", async () => {
+/** Source with comments stripped — prose about `fetch`, and the regexes that
+    detect AI tool names inside a document, are not calls. */
+async function codeOf(file: string): Promise<string[]> {
+  const source = await readFile(file, "utf8");
+  return source
+    .split("\n")
+    .map((line) => line.replace(/\/\/.*$/, "").replace(/^\s*\*.*$/, ""));
+}
+
+test("only the counter can reach the network", async () => {
   const files = await sourceFiles(SRC);
-  assert.ok(files.length >= 5, "expected to find the source modules");
+  assert.ok(files.length >= 6, "expected to find the source modules");
 
   for (const file of files) {
-    const source = await readFile(file, "utf8");
-    for (const [index, line] of source.split("\n").entries()) {
-      // Comments and the regexes that *detect* AI tool names inside a document
-      // are prose and patterns, not calls.
-      const code = line.replace(/\/\/.*$/, "").replace(/^\s*\*.*$/, "");
+    const name = path.relative(SRC, file);
+    for (const [index, line] of (await codeOf(file)).entries()) {
+      if (!NETWORK_APIS.test(line)) continue;
+      assert.equal(name, COUNTER, `${name}:${index + 1} reaches the network`);
+    }
+  }
+});
+
+test("the document pipeline has no way to reach anything", async () => {
+  for (const file of await sourceFiles(path.join(SRC, "ooxml"))) {
+    const name = path.relative(SRC, file);
+    for (const [index, line] of (await codeOf(file)).entries()) {
+      assert.doesNotMatch(line, NETWORK_APIS, `${name}:${index + 1} reaches the network`);
       assert.doesNotMatch(
-        code,
-        NETWORK_APIS,
-        `${path.relative(SRC, file)}:${index + 1} reaches the network`,
+        line,
+        /^\s*import\s[^;]*from\s+["'](?!\.)/,
+        `${name}:${index + 1} imports something that isn't ours`,
       );
     }
   }
 });
 
-test("the project has no runtime dependencies", async () => {
-  const manifest = JSON.parse(
-    await readFile(new URL("../package.json", import.meta.url), "utf8"),
-  ) as { dependencies?: Record<string, string> };
+test("the counter can only ever say 'one more'", async () => {
+  // Comments stripped first: prose is full of apostrophes and slashes, and a
+  // scan that reads them would be measuring the wrong thing.
+  const code = (await codeOf(path.join(SRC, COUNTER))).join("\n");
+  const source = await readFile(path.join(SRC, COUNTER), "utf8");
 
-  assert.deepEqual(
-    manifest.dependencies ?? {},
-    {},
-    "a runtime dependency can ship code this audit never sees",
-  );
+  // It may hold exactly one address, and that address is our own endpoint.
+  const urls = code.match(/(["'])(?:\/|https?:)[^"'\n]*\1/g) ?? [];
+  assert.deepEqual(urls, [COUNTER_ENDPOINT], "the counter points somewhere unexpected");
+
+  // No body means nothing about the document can ride along.
+  assert.doesNotMatch(source, /\bbody\s*:/, "the counter sends a request body");
+  assert.doesNotMatch(source, /from\s+["']\.\/ooxml/, "the counter can see the document pipeline");
+});
+
+test("nothing third-party ships to the browser", async () => {
+  for (const file of await sourceFiles(SRC)) {
+    const name = path.relative(SRC, file);
+    for (const [index, line] of (await codeOf(file)).entries()) {
+      assert.doesNotMatch(
+        line,
+        /^\s*import\s[^;]*from\s+["'](?!\.)/,
+        `${name}:${index + 1} pulls in a dependency the audit never sees`,
+      );
+    }
+  }
 });
