@@ -1,0 +1,25 @@
+{
+  "name": "undoai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Strip the traces AI generation leaves in a .docx or .pptx. Runs entirely in the browser.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@rgrove/parse-xml": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "docx": "^9.5.1",
+    "mammoth": "^1.11.0",
+    "pptxgenjs": "^4.0.1",
+    "tsx": "^4.23.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
+  }
+}
